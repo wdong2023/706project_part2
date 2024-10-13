@@ -1,4 +1,4 @@
-# Project part 2
+# Project part 2 COVID19 & Socioeconomic
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://movies-dataset-template.streamlit.app/)
 
