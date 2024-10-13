@@ -28,7 +28,7 @@ df = load_data()
 df.columns = ['country', 'health_expenditure', 'death_rate','GDP','life_expectancy','literacy_rate','net_migration',
               'poverty_ratio','umemployment','population','density','confirmed','deaths','recovered','active']
 # calculate rates
-df.confirmed_rate = df.confirmed / df.population
+df['confirmed_rate'] = df['confirmed'] / df['population']
 df['deaths_rate'] = df['deaths'] / df['population']
 df['recovered_rate'] = df['recovered'] / df['population']
 df['active_rate'] = df['active'] / df['population']
