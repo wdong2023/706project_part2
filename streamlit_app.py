@@ -36,10 +36,10 @@ df['active_rate'] = df['active'] / df['population']
 # Dropdown for selecting the X and Y factors
 x_axis = st.selectbox('Select X-axis factor (Used for scatterplot)', 
                       options=['health_expenditure', 'death_rate', 'GDP', 'life_expectancy', 'literacy_rate', 'net_migration', 'poverty_ratio', 'unemployment'],
-                      index=1) # default heath_expenditure
+                      index=0) # default heath_expenditure
 y_axis = st.selectbox('Select Y-axis factor', 
                       options=['health_expenditure', 'death_rate', 'GDP', 'life_expectancy', 'literacy_rate', 'net_migration', 'poverty_ratio', 'unemployment'],
-                      index = 3) # default GDP
+                      index = 2) # default GDP
 
 # Dropdown for selecting the rate category (confirmed, active, deaths, recovered)
 rate_category = st.selectbox(
@@ -83,6 +83,19 @@ st.header("Scatterplot + Regression Line")
 # Calculate the correlation coefficient between the selected socioeconomic factor and the selected COVID rate
 correlation_coef = filtered_df[x_axis].corr(filtered_df[rate_category])
 
+# Add correlation coefficient text on top of the chart
+correlation_text = alt.Chart(filtered_df).mark_text(
+    align='center',
+    fontSize=25,
+    fontWeight='bold',
+    color='black'
+).encode(
+    text=alt.value(f'Correlation: {correlation_coef:.2f}')
+).properties(
+    width=700,
+    height=50
+)
+
 # Create the scatterplot with a regression line
 scatter_plot = alt.Chart(filtered_df).mark_circle(size=100).encode(
     x=alt.X(x_axis, title=x_axis.replace('_', ' ').title()),
@@ -98,19 +111,6 @@ regression_line = scatter_plot.transform_regression(
 
 # Combine the scatterplot and the regression line
 combined_chart = scatter_plot + regression_line
-
-# Add correlation coefficient text on top of the chart
-correlation_text = alt.Chart(filtered_df).mark_text(
-    align='center',
-    fontSize=14,
-    fontWeight='bold',
-    color='black'
-).encode(
-    text=alt.value(f'Correlation: {correlation_coef:.2f}')
-).properties(
-    width=700,
-    height=50
-)
 
 # Display the combined chart (scatterplot + regression line) and the correlation coefficient
 st.altair_chart(combined_chart.properties(
