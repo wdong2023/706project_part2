@@ -30,10 +30,10 @@ df = load_data()
 df.columns = ['country', 'health_expenditure', 'death_rate','GDP','life_expectancy','literacy_rate','net_migration',
               'poverty_ratio','unemployment','population','density','confirmed','deaths','recovered','active']
 # calculate rates
-df['confirmed_rate'] = df['confirmed'] / df['population']
-df['deaths_rate'] = df['deaths'] / df['population']
-df['recovered_rate'] = df['recovered'] / df['population']
-df['active_rate'] = df['active'] / df['population']
+df['covid_confirmed_rate'] = df['confirmed'] / df['population']
+df['covid_deaths_rate'] = df['deaths'] / df['population']
+df['covid_recovered_rate'] = df['recovered'] / df['population']
+df['covid_active_rate'] = df['active'] / df['population']
 
 # Dropdown for selecting the X and Y factors
 x_axis = st.selectbox('Select X-axis factor (Used for scatterplot and bar chart)', 
@@ -46,7 +46,7 @@ y_axis = st.selectbox('Select Y-axis factor',
 # Dropdown for selecting the rate category (confirmed, active, deaths, recovered)
 rate_category = st.selectbox(
     'Rate category',
-    options=['confirmed_rate', 'active_rate', 'deaths_rate', 'recovered_rate'],
+    options=['covid_confirmed_rate', 'covid_active_rate', 'covid_deaths_rate', 'covid_recovered_rate'],
     format_func=lambda x: x.replace('_', ' ').title(),
     index=0  # Set default to 'confirmed_rate'
 )
@@ -68,7 +68,7 @@ bubble_chart = alt.Chart(filtered_df).mark_circle().encode(
     y=alt.Y(y_axis, title=y_axis.replace('_', ' ').title()),
     size=alt.Size(rate_category, title=rate_category.replace('_', ' ').title(), scale=alt.Scale(range=[100, 1000])),
     color=alt.Color('country', legend=None),
-    tooltip=['country', rate_category]
+    tooltip=['country', rate_category, x_axis, y_axis]
 ).properties(
     width=700,
     height=500,
@@ -131,19 +131,10 @@ st.header("Heatmap: correlations")
 # Select columns for the correlation matrix
 correlation_columns = ['health_expenditure', 'death_rate', 'GDP', 'life_expectancy', 'literacy_rate', 'net_migration', 
                        'poverty_ratio', 'unemployment', 'population', 'density', 
-                       'confirmed_rate', 'deaths_rate', 'recovered_rate', 'active_rate']
+                       'covid_confirmed_rate', 'covid_deaths_rate', 'covid_recovered_rate', 'covid_active_rate']
 
 # Calculate the correlation matrix
 correlation_matrix = df[correlation_columns].corr()
-
-# # Plot the heatmap
-# plt.figure(figsize=(10,8))
-# sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', center=0, linewidths=.5)
-# plt.title('Correlation Heatmap of Socioeconomic Factors and COVID-19 Rates', fontsize=16)
-
-# # Display the heatmap in Streamlit
-# st.pyplot(plt)
-
 
 # Convert the correlation matrix to a long format suitable for Altair
 correlation_long = correlation_matrix.reset_index().melt(id_vars='index')
@@ -153,7 +144,7 @@ correlation_long.columns = ['Variable 1', 'Variable 2', 'Correlation']
 heatmap = alt.Chart(correlation_long).mark_rect().encode(
     x=alt.X('Variable 1:N', title='Socioeconomic Factors and COVID-19 Metrics'),
     y=alt.Y('Variable 2:N', title='Socioeconomic Factors and COVID-19 Metrics'),
-    color=alt.Color('Correlation:Q', scale=alt.Scale(scheme='viridis')),
+    color=alt.Color('Correlation:Q', scale=alt.Scale(scheme='redblue')),
     tooltip=['Variable 1', 'Variable 2', 'Correlation']
 ).properties(
     width=600,
@@ -194,7 +185,7 @@ bar_chart = alt.Chart(filtered_range_df).mark_bar().encode(
     x=alt.X('country:N', title='Country', sort=alt.EncodingSortField(field=case_type, order='descending')),
     y=alt.Y(f'{case_type}:Q', title=f'Total {case_type.capitalize()} Cases'),
     color=alt.Color('country:N', legend=None),
-    tooltip=['country', f'{case_type}']
+    tooltip=['country', f'{case_type}', x_axis]
 ).properties(
     width=700,
     height=500,
