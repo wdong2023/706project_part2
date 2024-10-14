@@ -108,10 +108,9 @@ scatter_plot = alt.Chart(filtered_df).mark_circle(size=100).encode(
 )
 
 # Add the regression line with slope and intercept in the tooltip
-regression_line = scatter_plot.transform_regression(
+regression_line = alt.Chart(filtered_df).transform_regression(
     x_axis, rate_category, method="linear", params=True
-).mark_line().encode(
-    color=alt.value('red'),  
+).mark_line(color='red').encode(
     tooltip=[
         alt.Tooltip('slope:Q', title='Slope'),
         alt.Tooltip('intercept:Q', title='Intercept')
@@ -136,7 +135,7 @@ correlation_text = alt.Chart(pd.DataFrame({
     fontSize=20,
     fontWeight='bold',
     color='black',
-    dy=-10  # Move the text up a little bit
+    dy=-20  # Move the text up a little bit
 ).encode(
     text='text:N'
 )
