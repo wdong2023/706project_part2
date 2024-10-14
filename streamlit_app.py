@@ -83,18 +83,21 @@ st.header("Scatterplot + Regression Line")
 # Calculate the correlation coefficient between the selected socioeconomic factor and the selected COVID rate
 correlation_coef = filtered_df[x_axis].corr(filtered_df[rate_category])
 
-# Add correlation coefficient text on top of the chart
-correlation_text = alt.Chart(filtered_df).mark_text(
-    align='center',
-    fontSize=25,
-    fontWeight='bold',
-    color='black'
-).encode(
-    text=alt.value(f'Correlation: {correlation_coef:.2f}')
-).properties(
-    width=700,
-    height=50
-)
+# # Add correlation coefficient text on top of the chart
+# correlation_text = alt.Chart(filtered_df).mark_text(
+#     align='center',
+#     fontSize=25,
+#     fontWeight='bold',
+#     color='black'
+# ).encode(
+#     text=alt.value(f'Correlation: {correlation_coef:.2f}')
+# ).properties(
+#     width=700,
+#     height=50
+# )
+
+# # Display the correlation coefficient text
+# st.altair_chart(correlation_text, use_container_width=True)
 
 # Create the scatterplot with a regression line
 scatter_plot = alt.Chart(filtered_df).mark_circle(size=100).encode(
@@ -104,23 +107,57 @@ scatter_plot = alt.Chart(filtered_df).mark_circle(size=100).encode(
     tooltip=['country', x_axis, rate_category]
 )
 
-# Add the regression line
+# Add the regression line with slope and intercept in the tooltip
 regression_line = scatter_plot.transform_regression(
-    x_axis, rate_category
-).mark_line(color='red')
+    x_axis, rate_category, method="linear", params=True
+).mark_line().encode(
+    color=alt.value('red'),  
+    tooltip=[
+        alt.Tooltip('slope:Q', title='Slope'),
+        alt.Tooltip('intercept:Q', title='Intercept')
+    ]
+)
 
 # Combine the scatterplot and the regression line
 combined_chart = scatter_plot + regression_line
 
-# Display the combined chart (scatterplot + regression line) and the correlation coefficient
-st.altair_chart(combined_chart.properties(
+# # Display the combined chart (scatterplot + regression line) and the correlation coefficient
+# st.altair_chart(combined_chart.properties(
+#     width=700,
+#     height=500,
+#     title=f'Scatterplot: {x_axis.replace("_", " ").title()} vs {rate_category.replace("_", " ").title()}'
+# ), use_container_width=True)
+
+# Add correlation coefficient text at the top of the scatterplot
+correlation_text = alt.Chart(pd.DataFrame({
+    'text': [f'Correlation: {correlation_coef:.2f}']
+})).mark_text(
+    align='center',
+    fontSize=20,
+    fontWeight='bold',
+    color='black',
+    dy=-10  # Move the text up a little bit
+).encode(
+    text='text:N'
+)
+
+# Combine the correlation text with the scatterplot + regression line
+final_chart = alt.layer(
+    combined_chart,
+    correlation_text
+).properties(
     width=700,
     height=500,
     title=f'Scatterplot: {x_axis.replace("_", " ").title()} vs {rate_category.replace("_", " ").title()}'
-), use_container_width=True)
+).configure_title(
+    anchor='start',
+    fontSize=16,
+    fontWeight='bold'
+)
 
-# Display the correlation coefficient text
-st.altair_chart(correlation_text, use_container_width=True)
+# Display the final combined chart (scatterplot + regression line + correlation text as title)
+st.altair_chart(final_chart, use_container_width=True)
+
 
 # # Show a slider widget with the years using `st.slider`.
 # years = st.slider("Years", 1986, 2006, (2000, 2016))
