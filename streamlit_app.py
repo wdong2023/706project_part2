@@ -29,11 +29,11 @@ df = load_data()
 # rename columns
 df.columns = ['country', 'health_expenditure', 'death_rate','GDP','life_expectancy','literacy_rate','net_migration',
               'poverty_ratio','unemployment','population','density','confirmed','deaths','recovered','active']
-# calculate rates
-df['covid_confirmed_rate'] = df['confirmed'] / df['population']
-df['covid_deaths_rate'] = df['deaths'] / df['population']
-df['covid_recovered_rate'] = df['recovered'] / df['population']
-df['covid_active_rate'] = df['active'] / df['population']
+# calculate ratios
+df['covid_confirmed_ratio'] = df['confirmed'] / df['population']
+df['covid_deaths_ratio'] = df['deaths'] / df['population']
+df['covid_recovered_ratio'] = df['recovered'] / df['population']
+df['covid_active_ratio'] = df['active'] / df['population']
 
 # Dropdown for selecting the X and Y factors
 x_axis = st.selectbox('Select X-axis factor (Used for scatterplot and bar chart)', 
@@ -43,12 +43,12 @@ y_axis = st.selectbox('Select Y-axis factor',
                       options=['health_expenditure', 'death_rate', 'GDP', 'life_expectancy', 'literacy_rate', 'net_migration', 'poverty_ratio', 'unemployment'],
                       index = 2) # default GDP
 
-# Dropdown for selecting the rate category (confirmed, active, deaths, recovered)
-rate_category = st.selectbox(
-    'Rate category',
-    options=['covid_confirmed_rate', 'covid_active_rate', 'covid_deaths_rate', 'covid_recovered_rate'],
+# Dropdown for selecting the ratio category (confirmed, active, deaths, recovered)
+ratio_category = st.selectbox(
+    'Ratio category',
+    options=['covid_confirmed_ratio', 'covid_active_ratio', 'covid_deaths_ratio', 'covid_recovered_ratio'],
     format_func=lambda x: x.replace('_', ' ').title(),
-    index=0  # Set default to 'confirmed_rate'
+    index=0  # Set default to 'confirmed_ratio
 )
 
 # Dropdown for selecting countries
@@ -60,42 +60,44 @@ countries = st.multiselect('Country',
 filtered_df = df[df['country'].isin(countries)]
 
 # Section 1: Bubble Chart
-st.header("Bubble Chart: COVID-19 Rate by Socioeconomic Factors")
+st.header("Bubble Chart: COVID-19 Ratio by Socioeconomic Factors")
 
 # Create the bubble chart
 bubble_chart = alt.Chart(filtered_df).mark_circle().encode(
     x=alt.X(x_axis, title=x_axis.replace('_', ' ').title()),
     y=alt.Y(y_axis, title=y_axis.replace('_', ' ').title()),
-    size=alt.Size(rate_category, title=rate_category.replace('_', ' ').title(), scale=alt.Scale(range=[100, 1000])),
+    size=alt.Size(ratio_category, title=ratio_category.replace('_', ' ').title(), scale=alt.Scale(range=[100, 1000])),
     color=alt.Color('country', legend=None),
-    tooltip=['country', rate_category, x_axis, y_axis]
+    tooltip=['country', ratio_category, x_axis, y_axis]
 ).properties(
     width=700,
     height=500,
-    title=f'Bubble Chart: {x_axis.replace("_", " ").title()} vs {y_axis.replace("_", " ").title()} (Size: {rate_category.replace("_", " ").title()})'
+    title=f'Bubble Chart: {x_axis.replace("_", " ").title()} vs {y_axis.replace("_", " ").title()} (Size: {ratio_category.replace("_", " ").title()})'
 )
 
 # Display the bubble chart
 st.altair_chart(bubble_chart, use_container_width=True)
 
+st.caption("COVID ratio are total cases per country in 2020 divided by population. For instance: covid confirmed ratio = confirmed cases/population")
+
 #########################################################################################################
 # Section 2: Scatterplot + Regression Line
 st.header("Scatterplot + Regression Line")
 
-# Calculate the correlation coefficient between the selected socioeconomic factor and the selected COVID rate
-correlation_coef = filtered_df[x_axis].corr(filtered_df[rate_category])
+# Calculate the correlation coefficient between the selected socioeconomic factor and the selected COVID ratio
+correlation_coef = filtered_df[x_axis].corr(filtered_df[ratio_category])
 
 # Create the scatterplot with a regression line
 scatter_plot = alt.Chart(filtered_df).mark_circle(size=100).encode(
     x=alt.X(x_axis, title=x_axis.replace('_', ' ').title()),
-    y=alt.Y(rate_category, title=rate_category.replace('_', ' ').title()),
+    y=alt.Y(ratio_category, title=ratio_category.replace('_', ' ').title()),
     color=alt.Color('country', legend=None),
-    tooltip=['country', x_axis, rate_category]
+    tooltip=['country', x_axis, ratio_category]
 )
 
 # Add the regression line with slope and intercept in the tooltip
 regression_line = scatter_plot.transform_regression(
-    x_axis, rate_category
+    x_axis, ratio_category
 ).mark_line(color='red').encode(
     tooltip=[
         alt.Tooltip('slope:Q', title='Slope'),
@@ -110,7 +112,7 @@ final_chart = alt.layer(
     width=700,
     height=500,
     title={
-        'text': f'Scatterplot: {x_axis.replace("_", " ").title()} vs {rate_category.replace("_", " ").title()}',
+        'text': f'Scatterplot: {x_axis.replace("_", " ").title()} vs {ratio_category.replace("_", " ").title()}',
         'subtitle': f'Correlation: {correlation_coef:.2f}'
     }
 ).configure_title(
@@ -131,7 +133,7 @@ st.header("Heatmap: correlations")
 # Select columns for the correlation matrix
 correlation_columns = ['health_expenditure', 'death_rate', 'GDP', 'life_expectancy', 'literacy_rate', 'net_migration', 
                        'poverty_ratio', 'unemployment', 'population', 'density', 
-                       'covid_confirmed_rate', 'covid_deaths_rate', 'covid_recovered_rate', 'covid_active_rate']
+                       'covid_confirmed_ratio', 'covid_deaths_ratio', 'covid_recovered_ratio', 'covid_active_ratio']
 
 # Calculate the correlation matrix
 correlation_matrix = df[correlation_columns].corr()
