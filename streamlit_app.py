@@ -142,38 +142,44 @@ plt.title('Correlation Heatmap of Socioeconomic Factors and COVID-19 Rates', fon
 # Display the heatmap in Streamlit
 st.pyplot(plt)
 
-# # Show a slider widget with the years using `st.slider`.
-# years = st.slider("Years", 1986, 2006, (2000, 2016))
+# Section 4: Bar chart
 
-# # Filter the dataframe based on the widget input and reshape it.
-# df_filtered = df[(df["genre"].isin(genres)) & (df["year"].between(years[0], years[1]))]
-# df_reshaped = df_filtered.pivot_table(
-#     index="year", columns="genre", values="gross", aggfunc="sum", fill_value=0
-# )
-# df_reshaped = df_reshaped.sort_values(by="year", ascending=False)
+# Dropdown for case type (confirmed, active, deaths, recovered)
+case_type = st.selectbox(
+    'Case Type',
+    options=['confirmed', 'active', 'deaths', 'recovered'],
+    format_func=lambda x: x.capitalize()
+)
 
+# Slider for filtering countries based on the selected socioeconomic factor
+min_value = float(df[x_axis].min())
+max_value = float(df[x_axis].max())
 
-# # Display the data as a table using `st.dataframe`.
-# st.dataframe(
-#     df_reshaped,
-#     use_container_width=True,
-#     column_config={"year": st.column_config.TextColumn("Year")},
-# )
+factor_range = st.slider(
+    f'Select Range for {x_axis.replace("_", " ").title()}',
+    min_value=min_value,
+    max_value=max_value,
+    value=(min_value, max_value)  # Default range is the full range of the data
+)
 
-# # Display the data as an Altair chart using `st.altair_chart`.
-# df_chart = pd.melt(
-#     df_reshaped.reset_index(), id_vars="year", var_name="genre", value_name="gross"
-# )
-# chart = (
-#     alt.Chart(df_chart)
-#     .mark_line()
-#     .encode(
-#         x=alt.X("year:N", title="Year"),
-#         y=alt.Y("gross:Q", title="Gross earnings ($)"),
-#         color="genre:N",
-#     )
-#     .properties(height=320)
-# )
-# st.altair_chart(chart, use_container_width=True)
+# Filter the dataset based on the selected socioeconomic factor range
+filtered_range_df = df[(df[x_axis] >= factor_range[0]) & (df[x_axis] <= factor_range[1])]
+
+# Create a bar chart showing the raw cases for the filtered countries
+bar_chart = alt.Chart(filtered_range_df).mark_bar().encode(
+    x=alt.X('country:N', title='Country', sort=alt.EncodingSortField(field=case_type, order='descending')),
+    y=alt.Y(f'{case_type}:Q', title=f'Total {case_type.capitalize()} Cases'),
+    color=alt.Color('country:N', legend=None),
+    tooltip=['country', f'{case_type}']
+).properties(
+    width=700,
+    height=500,
+    title=f'Total {case_type.capitalize()} Cases by Country (Filtered by {x_axis.replace("_", " ").title()})'
+).configure_axisX(
+    labelFontSize=10  # Set the font size for the x-axis labels
+)
+
+# Display the bar chart
+st.altair_chart(bar_chart, use_container_width=True)
 
 
