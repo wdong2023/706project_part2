@@ -1,8 +1,8 @@
 import altair as alt
 import pandas as pd
 import streamlit as st
-import seaborn as sns
-import matplotlib.pyplot as plt
+# import seaborn as sns
+# import matplotlib.pyplot as plt
 
 # Show the page title and description.
 st.set_page_config(page_title="Socioeconomic Factors & COVID19")
@@ -36,7 +36,7 @@ df['recovered_rate'] = df['recovered'] / df['population']
 df['active_rate'] = df['active'] / df['population']
 
 # Dropdown for selecting the X and Y factors
-x_axis = st.selectbox('Select X-axis factor (Used for scatterplot)', 
+x_axis = st.selectbox('Select X-axis factor (Used for scatterplot and bar chart)', 
                       options=['health_expenditure', 'death_rate', 'GDP', 'life_expectancy', 'literacy_rate', 'net_migration', 'poverty_ratio', 'unemployment'],
                       index=0) # default heath_expenditure
 y_axis = st.selectbox('Select Y-axis factor', 
@@ -78,7 +78,7 @@ bubble_chart = alt.Chart(filtered_df).mark_circle().encode(
 # Display the bubble chart
 st.altair_chart(bubble_chart, use_container_width=True)
 
-
+#########################################################################################################
 # Section 2: Scatterplot + Regression Line
 st.header("Scatterplot + Regression Line")
 
@@ -125,7 +125,9 @@ final_chart = alt.layer(
 # Display the final combined chart (scatterplot + regression line + correlation text as title)
 st.altair_chart(final_chart, use_container_width=True)
 
+#########################################################################################################
 # Section 3: Heatmap of correlations
+st.header("Heatmap: correlations")
 # Select columns for the correlation matrix
 correlation_columns = ['health_expenditure', 'death_rate', 'GDP', 'life_expectancy', 'literacy_rate', 'net_migration', 
                        'poverty_ratio', 'unemployment', 'population', 'density', 
@@ -134,15 +136,37 @@ correlation_columns = ['health_expenditure', 'death_rate', 'GDP', 'life_expectan
 # Calculate the correlation matrix
 correlation_matrix = df[correlation_columns].corr()
 
-# Plot the heatmap
-plt.figure(figsize=(10,8))
-sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', center=0, linewidths=.5)
-plt.title('Correlation Heatmap of Socioeconomic Factors and COVID-19 Rates', fontsize=16)
+# # Plot the heatmap
+# plt.figure(figsize=(10,8))
+# sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', center=0, linewidths=.5)
+# plt.title('Correlation Heatmap of Socioeconomic Factors and COVID-19 Rates', fontsize=16)
+
+# # Display the heatmap in Streamlit
+# st.pyplot(plt)
+
+
+# Convert the correlation matrix to a long format suitable for Altair
+correlation_long = correlation_matrix.reset_index().melt(id_vars='index')
+correlation_long.columns = ['Variable 1', 'Variable 2', 'Correlation']
+
+# Create the heatmap with Altair
+heatmap = alt.Chart(correlation_long).mark_rect().encode(
+    x=alt.X('Variable 1:N', title='Socioeconomic Factors and COVID-19 Metrics'),
+    y=alt.Y('Variable 2:N', title='Socioeconomic Factors and COVID-19 Metrics'),
+    color=alt.Color('Correlation:Q', scale=alt.Scale(scheme='viridis')),
+    tooltip=['Variable 1', 'Variable 2', 'Correlation']
+).properties(
+    width=600,
+    height=600,
+    title="Correlation Heatmap"
+)
 
 # Display the heatmap in Streamlit
-st.pyplot(plt)
+st.altair_chart(heatmap, use_container_width=True)
 
+############################################################################################
 # Section 4: Bar chart
+st.header("Bar chart: Raw cases filtered by socioeconomic factors")
 
 # Dropdown for case type (confirmed, active, deaths, recovered)
 case_type = st.selectbox(
