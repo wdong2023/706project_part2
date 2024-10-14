@@ -1,6 +1,8 @@
 import altair as alt
 import pandas as pd
 import streamlit as st
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 # Show the page title and description.
 st.set_page_config(page_title="Socioeconomic Factors & COVID19")
@@ -26,7 +28,7 @@ df = load_data()
 
 # rename columns
 df.columns = ['country', 'health_expenditure', 'death_rate','GDP','life_expectancy','literacy_rate','net_migration',
-              'poverty_ratio','umemployment','population','density','confirmed','deaths','recovered','active']
+              'poverty_ratio','unemployment','population','density','confirmed','deaths','recovered','active']
 # calculate rates
 df['confirmed_rate'] = df['confirmed'] / df['population']
 df['deaths_rate'] = df['deaths'] / df['population']
@@ -83,22 +85,6 @@ st.header("Scatterplot + Regression Line")
 # Calculate the correlation coefficient between the selected socioeconomic factor and the selected COVID rate
 correlation_coef = filtered_df[x_axis].corr(filtered_df[rate_category])
 
-# # Add correlation coefficient text on top of the chart
-# correlation_text = alt.Chart(filtered_df).mark_text(
-#     align='center',
-#     fontSize=25,
-#     fontWeight='bold',
-#     color='black'
-# ).encode(
-#     text=alt.value(f'Correlation: {correlation_coef:.2f}')
-# ).properties(
-#     width=700,
-#     height=50
-# )
-
-# # Display the correlation coefficient text
-# st.altair_chart(correlation_text, use_container_width=True)
-
 # Create the scatterplot with a regression line
 scatter_plot = alt.Chart(filtered_df).mark_circle(size=100).encode(
     x=alt.X(x_axis, title=x_axis.replace('_', ' ').title()),
@@ -108,8 +94,8 @@ scatter_plot = alt.Chart(filtered_df).mark_circle(size=100).encode(
 )
 
 # Add the regression line with slope and intercept in the tooltip
-regression_line = alt.Chart(filtered_df).transform_regression(
-    x_axis, rate_category, method="linear", params=True
+regression_line = scatter_plot.transform_regression(
+    x_axis, rate_category
 ).mark_line(color='red').encode(
     tooltip=[
         alt.Tooltip('slope:Q', title='Slope'),
@@ -117,46 +103,44 @@ regression_line = alt.Chart(filtered_df).transform_regression(
     ]
 )
 
-# Combine the scatterplot and the regression line
-combined_chart = scatter_plot + regression_line
-
-# # Display the combined chart (scatterplot + regression line) and the correlation coefficient
-# st.altair_chart(combined_chart.properties(
-#     width=700,
-#     height=500,
-#     title=f'Scatterplot: {x_axis.replace("_", " ").title()} vs {rate_category.replace("_", " ").title()}'
-# ), use_container_width=True)
-
-# Add correlation coefficient text at the top of the scatterplot
-correlation_text = alt.Chart(pd.DataFrame({
-    'text': [f'Correlation: {correlation_coef:.2f}']
-})).mark_text(
-    align='center',
-    fontSize=20,
-    fontWeight='bold',
-    color='black',
-    dy=-20  # Move the text up a little bit
-).encode(
-    text='text:N'
-)
-
-# Combine the correlation text with the scatterplot + regression line
+# Layer the scatterplot and regression line, and set the combined title
 final_chart = alt.layer(
-    combined_chart,
-    correlation_text
+    scatter_plot + regression_line
 ).properties(
     width=700,
     height=500,
-    title=f'Scatterplot: {x_axis.replace("_", " ").title()} vs {rate_category.replace("_", " ").title()}'
+    title={
+        'text': f'Scatterplot: {x_axis.replace("_", " ").title()} vs {rate_category.replace("_", " ").title()}',
+        'subtitle': f'Correlation: {correlation_coef:.2f}'
+    }
 ).configure_title(
     anchor='start',
     fontSize=16,
-    fontWeight='bold'
+    fontWeight='bold',
+    subtitleFontSize=16,  # Subtitle styling
+    subtitleFontWeight='normal',
+    lineHeight=25  # Adjust title-subtitle spacing
 )
 
 # Display the final combined chart (scatterplot + regression line + correlation text as title)
 st.altair_chart(final_chart, use_container_width=True)
 
+# Section 3: Heatmap of correlations
+# Select columns for the correlation matrix
+correlation_columns = ['health_expenditure', 'death_rate', 'GDP', 'life_expectancy', 'literacy_rate', 'net_migration', 
+                       'poverty_ratio', 'unemployment', 'population', 'density', 
+                       'confirmed_rate', 'deaths_rate', 'recovered_rate', 'active_rate']
+
+# Calculate the correlation matrix
+correlation_matrix = df[correlation_columns].corr()
+
+# Plot the heatmap
+plt.figure(figsize=(10,8))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', center=0, linewidths=.5)
+plt.title('Correlation Heatmap of Socioeconomic Factors and COVID-19 Rates', fontsize=16)
+
+# Display the heatmap in Streamlit
+st.pyplot(plt)
 
 # # Show a slider widget with the years using `st.slider`.
 # years = st.slider("Years", 1986, 2006, (2000, 2016))
@@ -191,3 +175,5 @@ st.altair_chart(final_chart, use_container_width=True)
 #     .properties(height=320)
 # )
 # st.altair_chart(chart, use_container_width=True)
+
+
